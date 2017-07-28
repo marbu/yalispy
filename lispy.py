@@ -132,6 +132,10 @@ def eval(x, env=GLOBAL_ENV):
     # constant literal
     elif not isinstance(x, List):
         return x
+    # quotation
+    elif x[0] == 'quote':
+        (_, exp) = x
+        return exp
     # conditional
     elif x[0] == "if":
         (_, test, conseq, alt) = x

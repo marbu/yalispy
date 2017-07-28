@@ -29,6 +29,16 @@ def test_eval_number():
     assert lispy.eval(1.5) == 1.5
 
 
+def test_eval_quote():
+    env = lispy.standard_env()
+    assert 'r' not in env
+    assert lispy.eval(['quote', ["*", "pi", ["*", "r", "r"]]], env) == ["*", "pi", ["*", "r", "r"]]
+
+
+def test_eval_quote_str():
+    assert lispy.schemestr(lispy.eval(lispy.parse('(quote (* 3 r))'))) == '(* 3 r)'
+
+
 def test_eval_conditional():
     assert lispy.eval(lispy.parse("(if (> 1 0) (+ 1 1) (- 1 1))")) == 2
     assert lispy.eval(lispy.parse("(if (< 1 0) (+ 1 1) (- 1 1))")) == 0
