@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 
+import argparse
 import math
 import operator as op
 
@@ -206,3 +207,23 @@ def schemestr(exp):
         return "(" + " ".join(map(schemestr, exp)) + ")"
     else:
         return str(exp)
+
+
+#
+# main
+#
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser(description="Yet Another lispy clone.")
+    ap.add_argument("source", nargs='?', help="lispy source code file")
+    args = ap.parse_args()
+
+    if args.source is None:
+        try:
+            repl()
+        except EOFError:
+            print()
+    else:
+        with open(args.source, "r") as source_file:
+            source = source_file.read()
+            eval(parse(source))
