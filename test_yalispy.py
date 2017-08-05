@@ -88,3 +88,22 @@ def test_function_defcall_account(env):
             (account1 -20.00))
         """)
     assert yalispy.eval(yalispy.parse(func_prog)) == 80
+
+
+def test_function_defcall_fact(env):
+    func_prog = "(define fact (lambda (n) (if (<= n 1) 1 (* n (fact (- n 1))))))"
+    assert yalispy.eval(yalispy.parse(func_prog), env) is None
+    assert yalispy.eval(yalispy.parse("(fact 10)"), env) == 3628800
+
+
+def test_function_defcall_count(env):
+    func_prog = textwrap.dedent("""\
+        (begin
+            (define count
+                (lambda (item L)
+                    (if L
+                        (+ (equal? item (car L)) (count item (cdr L)))
+                        0)))
+            (count 0 (list 0 1 2 3 0 0)))
+        """)
+    assert yalispy.eval(yalispy.parse(func_prog)) == 3
