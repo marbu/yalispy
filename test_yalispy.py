@@ -1,6 +1,8 @@
 # -*- coding: utf8 -*-
 
 
+import textwrap
+
 import pytest
 
 import yalispy
@@ -65,3 +67,24 @@ def test_eval_fullexample(env):
     ])
 def test_schemestr(program):
     assert yalispy.schemestr(yalispy.parse(program)) == program
+
+
+def test_function_defcall_circle(env):
+    func_prog = "(define circle-area (lambda (r) (* pi (* r r))))"
+    call_prog = "(circle-area 10)"
+    assert yalispy.eval(yalispy.parse(func_prog), env) is None
+    assert yalispy.eval(yalispy.parse(call_prog), env) == 314.1592653589793
+
+
+def test_function_defcall_account(env):
+    func_prog = textwrap.dedent("""\
+        (begin
+            (define make-account
+                (lambda (balance)
+                    (lambda (amt)
+                        (begin (set! balance (+ balance amt))
+                               balance))))
+            (define account1 (make-account 100.00))
+            (account1 -20.00))
+        """)
+    assert yalispy.eval(yalispy.parse(func_prog)) == 80

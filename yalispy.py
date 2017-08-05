@@ -69,8 +69,34 @@ def atom(token):
 #
 
 
-# An environment is a mapping of {variable: value}
-Env = dict
+class Procedure(object):
+    """
+    A user-defined Scheme procedure.
+    """
+
+    def __init__(self, params, body, env):
+        self.params = params
+        self.body = body
+        self.env = env
+
+    def __call__(self, *args):
+        return eval(self.body, Env(self.params, args, self.env))
+
+
+class Env(dict):
+    """
+    An environment: a dict of {'val': val} pairs, with an outer Env.
+    """
+
+    def __init__(self, params=(), args=(), outer=None):
+        self.update(zip(params, args))
+        self.outer = outer
+
+    def find(self, var):
+        """
+        Find the innermost Env where var appears.
+        """
+        return self if (var in self) else self.outer.find(var)
 
 
 def standard_env():
@@ -128,7 +154,7 @@ def eval(x, env=GLOBAL_ENV):
     """
     # variable reference
     if isinstance(x, Symbol):
-        return env[x]
+        return env.find(x)[x]
     # constant literal
     elif not isinstance(x, List):
         return x
@@ -145,6 +171,14 @@ def eval(x, env=GLOBAL_ENV):
     elif x[0] == "define":
         (_, var, exp) = x
         env[var] = eval(exp, env)
+    # assignment
+    elif x[0] == "set!":
+        (_, var, exp) = x
+        env.find(var)[var] = eval(exp, env)
+    # procedure
+    elif x[0] == "lambda":
+        (_, params, body) = x
+        return Procedure(params, body, env)
     # procedure call
     else:
         proc = eval(x[0], env)
