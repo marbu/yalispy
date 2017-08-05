@@ -6,6 +6,11 @@ import pytest
 import yalispy
 
 
+@pytest.fixture
+def env():
+    return yalispy.standard_env()
+
+
 def test_tokenize():
     program = "(begin (define r 10) (* pi (* r r)))"
     tokens = ["(", "begin", "(", "define", "r", "10", ")", "(", "*", "pi", "(", "*", "r", "r", ")", ")", ")"]
@@ -18,8 +23,7 @@ def test_parse():
     assert yalispy.parse(program) == ast
 
 
-def test_eval_variable():
-    env = yalispy.standard_env()
+def test_eval_variable(env):
     env["foo"] = 10
     assert yalispy.eval("foo", env) == 10
 
@@ -29,8 +33,7 @@ def test_eval_number():
     assert yalispy.eval(1.5) == 1.5
 
 
-def test_eval_quote():
-    env = yalispy.standard_env()
+def test_eval_quote(env):
     assert 'r' not in env
     assert yalispy.eval(['quote', ["*", "pi", ["*", "r", "r"]]], env) == ["*", "pi", ["*", "r", "r"]]
 
@@ -44,15 +47,13 @@ def test_eval_conditional():
     assert yalispy.eval(yalispy.parse("(if (< 1 0) (+ 1 1) (- 1 1))")) == 0
 
 
-def test_eval_definition():
-    env = yalispy.standard_env()
+def test_eval_definition(env):
     assert "foo" not in env
     yalispy.eval(yalispy.parse("(define foo (+ 1 2))"), env)
     assert env["foo"] == 3
 
 
-def test_eval_fullexample():
-    env = yalispy.standard_env()
+def test_eval_fullexample(env):
     yalispy.eval(["define", "r", 10], env)
     assert yalispy.eval(["*", "pi", ["*", "r", "r"]], env) == 314.1592653589793
 
