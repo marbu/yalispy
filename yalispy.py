@@ -127,7 +127,7 @@ def standard_env():
         'length':  len,
         'list':    lambda *x: list(x),
         'list?':   lambda x: isinstance(x, list),
-        'map':     map,
+        'map':     lambda x, y: list(map(x, y)),
         'max':     max,
         'min':     min,
         'not':     op.not_,
