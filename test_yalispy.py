@@ -21,7 +21,7 @@ def test_parse():
 def test_eval_variable():
     env = yalispy.standard_env()
     env["foo"] = 10
-    assert eval("foo", env) == 10
+    assert yalispy.eval("foo", env) == 10
 
 
 def test_eval_number():
