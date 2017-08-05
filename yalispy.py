@@ -194,7 +194,12 @@ def eval(x, env=GLOBAL_ENV):
 
 def repl(prompt='lis.py> '):
     while True:
-        val = eval(parse(input(prompt)))
+        try:
+            str_input = input(prompt)
+        except EOFError:
+            print()
+            break
+        val = eval(parse(str_input))
         if val is not None:
             print(schemestr(val))
 
@@ -219,10 +224,7 @@ if __name__ == '__main__':
     args = ap.parse_args()
 
     if args.source is None:
-        try:
-            repl()
-        except EOFError:
-            print()
+        repl()
     else:
         with open(args.source, "r") as source_file:
             source = source_file.read()
