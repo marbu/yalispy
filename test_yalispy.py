@@ -51,12 +51,12 @@ def test_eval_conditional():
 
 def test_eval_definition(env):
     assert "foo" not in env
-    yalispy.eval(yalispy.parse("(define foo (+ 1 2))"), env)
+    assert yalispy.eval(yalispy.parse("(define foo (+ 1 2))"), env) is None
     assert env["foo"] == 3
 
 
 def test_eval_fullexample(env):
-    yalispy.eval(["define", "r", 10], env)
+    assert yalispy.eval(["define", "r", 10], env) is None
     assert yalispy.eval(["*", "pi", ["*", "r", "r"]], env) == 314.1592653589793
 
 
