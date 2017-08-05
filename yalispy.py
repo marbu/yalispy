@@ -136,6 +136,8 @@ def standard_env():
         'procedure?': callable,
         'round':   round,
         'symbol?': lambda x: isinstance(x, Symbol),
+        'display': lambda x: print(schemestr(x), end=''),
+        'newline': lambda: print(),
         })
     return env
 
