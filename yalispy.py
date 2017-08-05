@@ -5,6 +5,7 @@
 import argparse
 import math
 import operator as op
+import sys
 
 
 #
@@ -221,11 +222,31 @@ def schemestr(exp):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description="Yet Another lispy clone.")
     ap.add_argument("source", nargs='?', help="lispy source code file")
+    ap.add_argument(
+        "-l", "--load",
+        action="store_true",
+        help="load source into repl, as if entered line by line")
     args = ap.parse_args()
 
     if args.source is None:
         repl()
     else:
         with open(args.source, "r") as source_file:
-            source = source_file.read()
-            eval(parse(source))
+            if args.load:
+                for line in source_file:
+                    line = line.strip()
+                    if len(line) == 0:
+                        continue
+                    print("lis.py>", line)
+                    try:
+                        val = eval(parse(line))
+                    except Exception as ex:
+                        print("error:", ex, file=sys.stderr)
+                        repl()
+                        sys.exit(1)
+                    if val is not None:
+                        print(schemestr(val))
+                repl()
+            else:
+                source = source_file.read()
+                eval(parse(source))
