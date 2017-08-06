@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 
+import io
 import textwrap
 
 import pytest
@@ -13,10 +14,52 @@ def env():
     return yalispy.standard_env()
 
 
-def test_tokenize():
-    program = "(begin (define r 10) (* pi (* r r)))"
-    tokens = ["(", "begin", "(", "define", "r", "10", ")", "(", "*", "pi", "(", "*", "r", "r", ")", ")", ")"]
-    assert yalispy.tokenize(program) == tokens
+@pytest.mark.parametrize("source,tokens_expected", [
+    (
+        "",
+        []),
+    (
+        "    ",
+        []),
+    (
+        "; some comment",
+        []),
+    (
+        "'`,,@,",
+        ["'", "`", ",", ",@", ","]),
+    (
+        "foo->bar!",
+        ["foo->bar!"]),
+    (
+        ",@(* 2 345)",
+        [",@", "(", "*", "2", "345", ")"]),
+    (
+        "(if #t (newline))",
+        ["(", "if", "#t", "(", "newline", ")", ")"]),
+    (
+        '  ( display  "Hello World! " )  ',
+        ["(", "display", '"Hello World! "', ")"]),
+    (
+        '''(foo->bar "\\"Go!\\"")''',
+        ["(", "foo->bar", '"\\"Go!\\""', ")"]),
+    (
+        "(begin (define r 10) (* pi (* r r))) ; comment",
+        [
+            "(", "begin",
+            "(", "define", "r", "10", ")",
+            "(", "*", "pi", "(", "*", "r", "r", ")", ")",
+            ")"]),
+    ])
+def test_tokenizer(source, tokens_expected):
+    source_file = io.StringIO(initial_value=source)
+    inport = yalispy.InPort(source_file)
+    tokens = []
+    while True:
+        token = inport.next_token()
+        if token == yalispy.eof_object:
+            break
+        tokens.append(token)
+    assert tokens == tokens_expected
 
 
 def test_parse():

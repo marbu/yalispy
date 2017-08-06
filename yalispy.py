@@ -5,6 +5,7 @@
 import argparse
 import math
 import operator as op
+import re
 import sys
 
 
@@ -51,6 +52,8 @@ _unquotesplicing = sym("unquote-splicing")
 # Parsing
 #
 
+
+# TODO: update
 def parse(program):
     """
     Read a Scheme expression from a string to create AST (list).
@@ -58,11 +61,46 @@ def parse(program):
     return read_from_tokens(tokenize(program))
 
 
-def tokenize(chars):
+class InPort(object):
     """
-    Convert a string of characters into a list of tokens.
+    An input port. Retains a line of chars.
     """
-    return chars.replace("(", " ( ").replace(")", " ) ").split()
+
+    tokenizer = re.compile(r'''
+        \s*                 # initial whitespace
+        (                   # match group for scheme token
+            ,@              # abbrev. for unquote-splicing
+          | [()'`,]         # parentheses and quotations (single char. token)
+          | "(?:            # start of string expr. (string is token)
+                 [\\].      # character escaping
+               | [^\\"]     # string content
+            )*"
+          | ;.*             # comment
+          | [^\s('"`,;)]*   # symbol (no whitespace, quotes or commas)
+        )
+        (.*)                # group for the rest outside of the matched token
+        ''', re.VERBOSE)
+
+    def __init__(self, file_obj):
+        self.file_obj = file_obj
+        self.line = ''
+
+    def next_token(self):
+        """
+        Return the next token, reading new text into line buffer if needed.
+        """
+        while True:
+            if self.line == "":
+                self.line = self.file_obj.readline()
+            if self.line == "":
+                return eof_object
+            token, self.line = InPort.tokenizer.match(self.line).groups()
+            if token != "" and not token.startswith(';'):
+                return token
+
+
+eof_object = Symbol("#<eof-object>")  # Note: uninterned; can't be read
+
 
 
 def read_from_tokens(tokens):
