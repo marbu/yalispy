@@ -9,12 +9,43 @@ import sys
 
 
 #
-# Representation of Scheme objects
+# Representation of Scheme data types
 #
 
-Symbol = str          # A Scheme Symbol is implemented as a Python str
+
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
+# TODO: String
+# TODO: Boolean
+# TODO: Port
+
+
+class Symbol(str):
+    """
+    A Scheme Symbol.
+    """
+
+
+def sym(s, symbol_table={}):
+    """
+    Find or create unique Symbol entry for str s in symbol table.
+    """
+    if s not in symbol_table:
+        symbol_table[s] = Symbol(s)
+    return symbol_table[s]
+
+
+_quote = sym("quote")
+_if = sym("if")
+_set = sym("set!")
+_define = sym("define")
+_lambda = sym("lambda")
+_begin = sym("begin")
+_definemacro = sym("define-macro")
+_quasiquote = sym("quasiquote")
+_unquote = sym("unquote")
+_unquotesplicing = sym("unquote-splicing")
+
 
 #
 # Parsing
