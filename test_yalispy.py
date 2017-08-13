@@ -84,7 +84,7 @@ def test_eval_quote(env):
 
 
 def test_eval_quote_str():
-    assert yalispy.schemestr(yalispy.eval(yalispy.parse('(quote (* 3 r))'))) == '(* 3 r)'
+    assert yalispy.to_string(yalispy.eval(yalispy.parse('(quote (* 3 r))'))) == '(* 3 r)'
 
 
 def test_eval_conditional():
@@ -108,8 +108,8 @@ def test_eval_fullexample(env):
     "(begin (define r 10) (* pi (* r r)))",
     "(if (> 1 0) (+ 1 1) (- 1 1))",
     ])
-def test_schemestr(program):
-    assert yalispy.schemestr(yalispy.parse(program)) == program
+def test_to_string(program):
+    assert yalispy.to_string(yalispy.parse(program)) == program
 
 
 def test_function_defcall_circle(env):

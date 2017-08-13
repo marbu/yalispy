@@ -207,7 +207,7 @@ def standard_env():
         'procedure?': callable,
         'round':   round,
         'symbol?': lambda x: isinstance(x, Symbol),
-        'display': lambda x: print(schemestr(x), end=''),
+        'display': lambda x: print(to_string(x), end=''),
         'newline': lambda: print(),
         })
     return env
@@ -271,15 +271,15 @@ def repl(prompt='lis.py> '):
             break
         val = eval(parse(str_input))
         if val is not None:
-            print(schemestr(val))
+            print(to_string(val))
 
 
-def schemestr(exp):
+def to_string(exp):
     """
     Convert a Python object back into a Scheme-readable string.
     """
     if isinstance(exp, List):
-        return "(" + " ".join(map(schemestr, exp)) + ")"
+        return "(" + " ".join(map(to_string, exp)) + ")"
     else:
         return str(exp)
 
@@ -314,7 +314,7 @@ if __name__ == '__main__':
                         repl()
                         sys.exit(1)
                     if val is not None:
-                        print(schemestr(val))
+                        print(to_string(val))
                 repl()
             else:
                 source = source_file.read()
