@@ -269,7 +269,8 @@ def eval(x, env=GLOBAL_ENV):
     Evaluate an expression in an environment.
     """
     # variable reference
-    if isinstance(x, Symbol):
+    # TODO: remove HACK (string with variable name is not a symbol)
+    if isinstance(x, str):
         return env.find(x)[x]
     # constant literal
     elif not isinstance(x, List):
