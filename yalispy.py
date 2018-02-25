@@ -3,6 +3,7 @@
 
 
 import argparse
+import io
 import math
 import operator as op
 import re
@@ -53,12 +54,14 @@ _unquotesplicing = sym("unquote-splicing")
 #
 
 
-# TODO: update
-def parse(program):
+def parse(inport):
     """
     Read a Scheme expression from a string to create AST (list).
     """
-    return read_from_tokens(tokenize(program))
+    # Backwards compatibility: given a str, convert it to an InPort
+    if isinstance(inport, str):
+        inport = InPort(io.StringIO(inport))
+    return read(inport)
 
 
 class InPort(object):
@@ -102,37 +105,77 @@ class InPort(object):
 eof_object = Symbol("#<eof-object>")  # Note: uninterned; can't be read
 
 
-
-def read_from_tokens(tokens):
+def readchar(inport):
     """
-    Read an expression from a list of tokens to create AST.
+    Read the next character from an input port.
     """
-    if len(tokens) == 0:
-        raise SyntaxError("unexpected EOF while reading")
-    token = tokens.pop(0)
-    if "(" == token:
-        ast_list = []
-        while tokens[0] != ")":
-            ast_list.append(read_from_tokens(tokens))
-        tokens.pop(0)  # pop off ")"
-        return ast_list
-    elif ")" == token:
-        raise SyntaxError("unexpected ')'")
+    if inport.line != '':
+        char = inport.line[0]
+        inport.line = inport.line[1:]
+        return char
     else:
-        return atom(token)
+        return inport.file.read(1) or eof_object
+
+
+def read(inport):
+    """
+    Read a Scheme expression from an input port.
+    """
+    def read_ahead(token):
+        if '(' == token:
+            ast_list = []
+            while True:
+                token = inport.next_token()
+                if token == ')':
+                    return ast_list
+                else:
+                    ast_list.append(read_ahead(token))
+        elif ')' == token:
+            raise SyntaxError('unexpected )')
+        elif token in quotes:
+            return [quotes[token], read(inport)]
+        elif token is eof_object:
+            raise SyntaxError('unexpected EOF in list')
+        else:
+            return atom(token)
+    # body of read:
+    token1 = inport.next_token()
+    if token1 is eof_object:
+        return eof_object
+    else:
+        return read_ahead(token1)
+
+
+quotes = {
+    "'": _quote,
+    "`": _quasiquote,
+    ",": _unquote,
+    ",@": _unquotesplicing,
+    }
 
 
 def atom(token):
     """
-    Numbers become numbers; every other token is a symbol.
+    Numbers become numbers; #t and #f are booleans; "..." is string; every
+    other token is a symbol.
     """
+    if token == '#t':
+        return True
+    elif token == '#f':
+        return False
+    elif token[0] == '"':
+        # TODO: remove encode decode HACK
+        return token[1:-1].encode().decode('unicode_escape')
     try:
         return int(token)
     except ValueError:
         try:
             return float(token)
         except ValueError:
-            return Symbol(token)
+            try:
+                return complex(token.replace('i', 'j', 1))
+            except ValueError:
+                return Symbol(token)
 
 
 #
@@ -262,26 +305,52 @@ def eval(x, env=GLOBAL_ENV):
 # REPL
 #
 
-def repl(prompt='lis.py> '):
+def repl(prompt='lis.py> ', inport=InPort(sys.stdin), out=sys.stdout):
+    """
+    A prompt-read-eval-print loop.
+    """
     while True:
         try:
-            str_input = input(prompt)
-        except EOFError:
-            print()
-            break
-        val = eval(parse(str_input))
-        if val is not None:
-            print(to_string(val))
+            if prompt:
+                print(prompt, end="", file=sys.stderr, flush=True)
+            exp = parse(inport)
+            if exp is eof_object:
+                print()
+                return
+            val = eval(exp)
+            if val is not None and out:
+                print(to_string(val), file=out)
+        except Exception as ex:
+            print('{}: {}'.format(type(ex).__name__, ex))
 
 
 def to_string(exp):
     """
     Convert a Python object back into a Scheme-readable string.
     """
-    if isinstance(exp, List):
+    if exp is True:
+        return '#t'
+    elif exp is False:
+        return '#f'
+    elif isinstance(exp, Symbol):
+        return exp
+    elif isinstance(exp, str):
+        # TODO: remove encode decode HACK
+        return '"{}"'.format(
+            x.encode('unicode_escape').decode().replace('"', r'\"'))
+    elif isinstance(exp, List):
         return "(" + " ".join(map(to_string, exp)) + ")"
+    elif isinstance(exp, complex):
+        return str(exp).replace('j', 'i')
     else:
         return str(exp)
+
+
+def load(filename):
+    """
+    Eval every expression from a file.
+    """
+    repl(None, InPort(open(filename)), None)
 
 
 #
